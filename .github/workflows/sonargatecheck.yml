@@ -31,8 +31,9 @@ jobs:
       - name: Extract Analysis URL
         id: extract_analysis_url
         run: |
-         report_logs="${{ steps.sonarcloud_analysis.outputs.logs }}"
-         analysis_url=$(echo "$report_logs" | grep -oP 'INFO: More about the report processing at [^ ]+' | cut -d " " -f 8)
-         echo "Analysis URL: $analysis_url"
-         echo "::set-output name=analysis_url::$analysis_url"
+          report_logs="${{ steps.sonarcloud_analysis.outputs.logs }}"
+          analysis_url=$(echo "$report_logs" | grep -oP 'https://sonarcloud\.io/api/ce/task\?id=[^\s"]+')
+          echo "Analysis URL: $analysis_url"
+          echo "::set-output name=analysis_url::$analysis_url"
+
 
