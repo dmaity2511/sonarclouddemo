@@ -1,8 +1,6 @@
-name: Sonar Cloud Analysis
+name: Sonar Cloud Analysis and Quality Gate
 
 on:
-  # Trigger analysis when pushing in master or pull requests, and when creating
-  # a pull request.
   push:
     branches:
       - sonarcloud
@@ -13,31 +11,33 @@ on:
       - reopened
 
 jobs:
-  sonarcloud:
-    name: SonarCloud
+  sonarcloud_and_quality_gate:
+    name: SonarCloud and Quality Gate Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
         with:
-          # Shallow clones should be disabled for a better relevancy of analysis
           fetch-depth: 0
+      
       - name: Run SonarCloud Analysis
+        id: sonarcloud_analysis
         uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # SonarCloud access token should be generated from https://sonarcloud.io/account/security/
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      
+      - name: Extract Analysis ID
+        id: extract_analysis_id
+        run: |
+          report_link=$(echo "${{ steps.sonarcloud_analysis.outputs.full-report }}" | grep -oP 'https://sonarcloud.io/api/ce/task\?id=[^\"]+')
+          analysis_id=$(echo "$report_link" | awk -F '=' '{print $2}')
+          echo "Analysis ID: $analysis_id"
+        shell: bash
 
-  quality_gate_check:
-    name: Quality Gate Check
-    needs: sonarcloud
-    runs-on: ubuntu-latest
-    steps:
-      - name: Wait for Analysis to Complete
-        run: sleep 60 # Wait for 1 minute
       - name: Check Quality Gate Status
         run: |
-          quality_gate_status=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" -X GET "https://sonarcloud.io/web_api/api/qualitygates/project_status?projectKey=dmaity2511_sonarclouddemo")
+          analysis_id=${{ steps.extract_analysis_id.outputs.analysis_id }}
+          quality_gate_status=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" -X GET "https://sonarcloud.io/api/qualitygates/project_status?analysisId=$analysis_id")
           status=$(echo "$quality_gate_status" | jq -r .projectStatus.status)
           if [[ "$status" != "OK" ]]; then
             echo "Quality gate check failed: $status"
