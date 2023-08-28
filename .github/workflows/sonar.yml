@@ -3,7 +3,7 @@ name: Sonar Cloud Analysis
 on:
   push:
     branches:
-      - sonarcloud
+      - main
   pull_request:
     types:
       - opened
