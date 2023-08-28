@@ -1,7 +1,8 @@
 name: Sonar Cloud Analysis
 
 on:
-  # Trigger analysis when pushing to the 'sonarcloud' branch, and when creating or updating pull requests.
+  # Trigger analysis when pushing in master or pull requests, and when creating
+  # a pull request.
   workflow_dispatch:
   push:
     branches:
@@ -37,7 +38,7 @@ jobs:
         run: sleep 60 # Wait for 1 minute
       - name: Check Quality Gate Status
         run: |
-          quality_gate_status=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" -X GET "https://sonarcloud.io/api/qualitygates/project_status?projectKey=dmaity2511_sonarclouddemo")
+          quality_gate_status=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" -X GET "https://sonarcloud.io/web_api/api/qualitygates/project_status?projectKey=dmaity2511_sonarclouddemo")
           status=$(echo "$quality_gate_status" | jq -r .projectStatus.status)
           if [[ "$status" != "OK" ]]; then
             echo "Quality gate check failed: $status"
