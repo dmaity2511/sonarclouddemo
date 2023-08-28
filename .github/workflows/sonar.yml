@@ -28,11 +28,27 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       
+      - name: Extract Analysis URL
+        id: extract_analysis_url
+        run: |
+          report=$(echo "${{ steps.sonarcloud_analysis.outputs.full-report }}")
+          analysis_url=$(echo "$report" | grep -oP 'INFO: More about the report processing at [^ ]+' | cut -d " " -f 8)
+          echo "Analysis URL: $analysis_url"
+          echo "::set-output name=analysis_url::$analysis_url"
+        shell: bash
+
+      - name: Fetch Analysis JSON
+        id: fetch_analysis_json
+        run: |
+          analysis_url=${{ steps.extract_analysis_url.outputs.analysis_url }}
+          analysis_json=$(curl -s "$analysis_url")
+          echo "::set-output name=analysis_json::$analysis_json"
+      
       - name: Extract Analysis ID
         id: extract_analysis_id
         run: |
-          report=$(echo "${{ steps.sonarcloud_analysis.outputs.full-report }}")
-          analysis_id=$(echo "$report" | jq -r '.task.analysisId')
+          analysis_json=${{ steps.fetch_analysis_json.outputs.analysis_json }}
+          analysis_id=$(echo "$analysis_json" | jq -r '.task.analysisId')
           echo "::set-output name=analysis_id::$analysis_id"
         shell: bash
 
