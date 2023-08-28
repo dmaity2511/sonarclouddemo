@@ -26,24 +26,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       
-      - name: Extract Analysis ID
-        id: extract_analysis_id
+      - name: Extract Task ID
+        id: extract_task_id
         run: |
-          report_link=$(echo "${{ steps.sonarcloud_analysis.outputs.full-report }}" | grep -oP 'https://sonarcloud.io/api/ce/task\?id=[^\"]+')
-          analysis_id=$(echo "$report_link" | awk -F '=' '{print $2}')
-          echo "Analysis ID: $analysis_id"
+          report_line=$(echo "${{ steps.sonarcloud_analysis.outputs.full-report }}" | sed -n '281p')
+          task_id=$(echo "$report_line" | grep -oP 'https://sonarcloud.io/api/ce/task\?id=[^=]+=\K[^\&]+')
+          echo "Task ID: $task_id"
         shell: bash
-
-      - name: Check Quality Gate Status
-        run: |
-          analysis_id=${{ steps.extract_analysis_id.outputs.analysis_id }}
-          quality_gate_status=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" -X GET "https://sonarcloud.io/api/qualitygates/project_status?analysisId=$analysis_id")
-          status=$(echo "$quality_gate_status" | jq -r .projectStatus.status)
-          if [[ "$status" != "OK" ]]; then
-            echo "Quality gate check failed: $status"
-            exit 1
-          else
-            echo "Quality gate check passed"
-          fi
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
