@@ -17,8 +17,8 @@ name: Lint Code Base
 on:
   push:
     branches:
-      - "master"
-      - "feature*"
+      - develop
+
 
 ###############
 # Set the Job #
