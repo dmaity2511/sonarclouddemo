@@ -28,11 +28,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       
+      
       - name: Extract Analysis URL
         id: extract_analysis_url
         run: |
           report_logs="${{ steps.sonarcloud_analysis.outputs.logs }}"
-          analysis_url=$(echo "$report_logs" | grep -oP 'https://sonarcloud\.io/api/ce/task\?id=[^\s"]+')
+          analysis_url=$(echo "$report_logs" | grep -oP 'More about the report processing at [^ ]+' | cut -d " " -f 7)
           echo "Analysis URL: $analysis_url"
           echo "::set-output name=analysis_url::$analysis_url"
 
