@@ -31,9 +31,10 @@ jobs:
       - name: Extract Analysis ID
         id: extract_analysis_id
         run: |
-          report_link=$(echo "${{ steps.sonarcloud_analysis.outputs.full-report }}" | grep -oP 'https://sonarcloud.io/api/ce/task\?id=[^=]+=\K[^\"]+')
-          analysis_id=$(echo "$report_link" | grep -oP 'id=[^=]+=\K[^\&]+')
+          report=$(echo "${{ steps.sonarcloud_analysis.outputs.full-report }}")
+          analysis_id=$(echo "$report" | jq -r '.task.analysisId')
           echo "::set-output name=analysis_id::$analysis_id"
+        shell: bash
 
       - name: Check Quality Gate Status
         run: |
