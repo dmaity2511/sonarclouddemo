@@ -42,6 +42,7 @@ jobs:
         run: |
           analysis_url=${{ steps.extract_analysis_url.outputs.analysis_url }}
           analysis_json=$(curl -s "$analysis_url")
+          echo "Analysis JSON: $analysis_json"
           echo "::set-output name=analysis_json::$analysis_json"
       
       - name: Extract Analysis ID
@@ -49,6 +50,7 @@ jobs:
         run: |
           analysis_json=${{ steps.fetch_analysis_json.outputs.analysis_json }}
           analysis_id=$(echo "$analysis_json" | jq -r '.task.analysisId')
+          echo "Analysis ID: $analysis_id"
           echo "::set-output name=analysis_id::$analysis_id"
         shell: bash
 
