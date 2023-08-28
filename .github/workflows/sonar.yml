@@ -14,6 +14,8 @@ jobs:
   sonarcloud_and_quality_gate:
     name: SonarCloud and Quality Gate Check
     runs-on: ubuntu-latest
+    outputs:
+      analysis_id: ${{ steps.extract_analysis_id.outputs.analysis_id }}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -31,8 +33,7 @@ jobs:
         run: |
           report_link=$(echo "${{ steps.sonarcloud_analysis.outputs.full-report }}" | grep -oP 'https://sonarcloud.io/api/ce/task\?id=[^=]+=\K[^\"]+')
           analysis_id=$(echo "$report_link" | grep -oP 'id=[^=]+=\K[^\&]+')
-          echo "Analysis ID: $analysis_id"
-        shell: bash
+          echo "::set-output name=analysis_id::$analysis_id"
 
       - name: Check Quality Gate Status
         run: |
