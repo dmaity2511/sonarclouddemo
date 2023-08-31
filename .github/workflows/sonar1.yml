@@ -11,37 +11,39 @@ on:
       - reopened
 
 jobs:
-  sonarcloud_and_quality_gate:
-    name: SonarCloud and Quality Gate Check
+  sonar_analysis:
+    name: Sonar Analysis
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      
-      - name: Fetch Analysis ID and Perform Quality Gate Check
-        id: quality_gate_check
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up SonarCloud scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Run Sonar Analysis
         run: |
           SONAR_TOKEN=$SONAR_TOKEN
           SONAR_URL=https://sonarcloud.io
-          PROJECT_KEY=$PROJECT_KEY
-          GIT_BRANCH=$GITHUB_REF
-
+          PROJECT_KEY=dmaity2511_sonarclouddemo
+          GIT_BRANCH=sonarcloud
+  
           analysisStatus=$(curl -s -u ${SONAR_TOKEN}: "$SONAR_URL/api/ce/activity?component=${PROJECT_KEY}" | jq '.tasks[] | "\(.branch) \(.status)"' | grep "$GIT_BRANCH" | head -1 | awk '{print $NF}')
           analysisStatus=$(echo $analysisStatus  | tr -d "\"\`'")
           [ "$analysisStatus" != "SUCCESS" ] && echo "ERROR => sonar analysis for branch $GIT_BRANCH and project $PROJECT_KEY failed, exiting..." && exit 1
-
+  
           analysisID=$(curl -s -u ${SONAR_TOKEN}: "$SONAR_URL/api/ce/activity?component=${PROJECT_KEY}" | jq '.tasks[] | "\(.branch) \(.id) \(.analysisId)"' | grep "$GIT_BRANCH" | head -1 | awk '{print $NF}')
           [ -z "$analysisID" ] && echo "ERROR => failed to fetch analysis id, exiting..." && exit 1
-
+  
           analysisID=$(echo "$analysisID" | tr -d "\"\`'")
           echo "==> current sonar analysis ID for branch $GIT_BRANCH is: $analysisID"
-
+  
           qualityGatesStatus=$(curl -s -u ${SONAR_TOKEN}: "$SONAR_URL/api/qualitygates/project_status?analysisId=${analysisID}" | jq -r .projectStatus.status)
           [ "$qualityGatesStatus" != "OK" ] && echo "ERROR => Quality Gates for branch $GIT_BRANCH and project $PROJECT_KEY failed, exiting..." && exit 1
-
+  
           echo "==> Sonar Analysis for branch $GIT_BRANCH and project $PROJECT_KEY passed"
-          
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          PROJECT_KEY: "dmaity2511_sonarclouddemo"
