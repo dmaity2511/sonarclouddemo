@@ -1,7 +1,7 @@
 name: Sonar Cloud Analysis
 
 on:
-  push:
+#  push:
     branches:
       - sonarcloud
   pull_request:
