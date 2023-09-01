@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - sonarcloud
+      - main
   pull_request:
     types:
       - opened
@@ -47,3 +48,16 @@ jobs:
           echo "==> Sonar Analysis for branch $GIT_BRANCH and project $PROJECT_KEY passed"
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  dummy_build:
+    name: Dummy Build
+    needs: sonar_analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Quality Gates Status
+        run: echo "Quality Gates check passed"
+        if: ${{ needs.sonar_analysis.result == 'success' }}
+
+      - name: Fail on Failed Quality Gates
+        run: echo "Quality Gates check failed"
+        if: ${{ needs.sonar_analysis.result != 'success' }}
